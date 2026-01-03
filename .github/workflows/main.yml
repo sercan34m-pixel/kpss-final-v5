@@ -1,4 +1,4 @@
-name: Build Android APK Final
+name: Build Android APK (Fixed)
 
 on:
   push:
@@ -11,50 +11,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Kodları Çek
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 2. Eksik Linux Parçalarını Yükle (HATAYI ÇÖZEN KISIM)
+      - name: Install Linux Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libblkid-dev pkg-config ninja-build
+
+      # 3. Java Kur
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
+      # 4. Python Kur
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      # Assets klasörünü de taşıyoruz çünkü kodda "assets_dir" var.
-      - name: Setup Project Directory
-        run: |
-          mkdir build_area
-          find . -maxdepth 1 -name "main.py" -exec mv {} build_area/ \;
-          find . -maxdepth 1 -name "*.json" -exec mv {} build_area/ \;
-          if [ -f "requirements.txt" ]; then mv requirements.txt build_area/; fi
-          if [ -d "assets" ]; then mv assets build_area/; fi
-
-      - name: Install Dependencies
+      # 5. Flet ve Araçları Yükle
+      - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install cookiecutter packaging flet
+          pip install flet cookiecutter packaging
 
+      # 6. Flutter Kurulumu
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.19.0'
 
-      - name: Accept Android Licenses
+      # 7. Dosya Kontrolü (Dedektiflik)
+      # Dosyaların yerinde olup olmadığını loglarda görelim.
+      - name: List Files
         run: |
-          yes | flutter doctor --android-licenses
+          ls -R
 
+      # 8. APK Derleme
+      # Not: 'yes |' kaldırdık, --verbose ile detayı göreceğiz.
       - name: Build APK
         run: |
-          cd build_area
-          yes | flet build apk --verbose
+          flet build apk --verbose
 
+      # 9. Sonucu Paketle
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: KPSS-FINAL-APK
-          path: build_area/build/apk/app-release.apk
+          name: KPSS-FIXED-APK
+          path: build/apk/app-release.apk
