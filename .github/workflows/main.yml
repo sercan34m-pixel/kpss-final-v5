@@ -1,4 +1,4 @@
-name: Build Android APK (Fixed)
+name: Build Android APK (Final Fix)
 
 on:
   push:
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. Eksik Linux Parçalarını Yükle (HATAYI ÇÖZEN KISIM)
+      # 2. Eksik Linux Parçalarını Yükle (BU ÇOK ÖNEMLİ)
       - name: Install Linux Dependencies
         run: |
           sudo apt-get update
@@ -40,27 +40,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install flet cookiecutter packaging
 
-      # 6. Flutter Kurulumu
+      # 6. Flutter Kurulumu (Versiyonu güncelledik)
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.19.0'
+          channel: 'stable' # En güncel sürümü almasını sağladık
 
-      # 7. Dosya Kontrolü (Dedektiflik)
-      # Dosyaların yerinde olup olmadığını loglarda görelim.
+      # 7. Dosyaları Listele (Kontrol Amaçlı)
       - name: List Files
         run: |
           ls -R
 
-      # 8. APK Derleme
-      # Not: 'yes |' kaldırdık, --verbose ile detayı göreceğiz.
+      # 8. APK Derleme (İŞTE ÇÖZÜM BURADA)
+      # 'yes |' komutunu geri getirdik. 
+      # Artık Linux kütüphaneleri tam olduğu için "Broken Pipe" hatası vermeyecek,
+      # Flet soru sorduğunda otomatik "yes" (evet) diyecek.
       - name: Build APK
         run: |
-          flet build apk --verbose
+          yes | flet build apk --verbose
 
       # 9. Sonucu Paketle
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: KPSS-FIXED-APK
+          name: KPSS-SON-APK
           path: build/apk/app-release.apk
